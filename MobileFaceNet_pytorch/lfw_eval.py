@@ -104,6 +104,7 @@ def get_feature(model, samples, file):
     with torch.no_grad():
         output = model(imgs)  # 将翻转与未翻转的图片合并输入模型
     end = time.time()
+    # print(end - start)
     elapsed += end - start
 
     feature_0 = output[0].cpu().numpy()
@@ -153,7 +154,7 @@ def evaluate(model):
         is_same = tokens[2]
         angles.append('{} {}\n'.format(theta, is_same))
 
-    print('elapsed: {} ms'.format(elapsed / (6000 * 2) * 1000))
+    print('elapsed: {} ms'.format(elapsed * 1000))
 
     with open('data/angles.txt', 'w') as file:
         file.writelines(angles)

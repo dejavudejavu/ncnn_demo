@@ -13,7 +13,8 @@
 using namespace std;
 #include "time.h"
 
-double duration;
+
+double duration=.0;
 
 //这个函数是官方提供的用于打印输出的tensor
 void pretty_print(const ncnn::Mat& m)
@@ -62,15 +63,23 @@ void get_output(cv::Mat &img,ncnn::Net &net,float* a,bool flip){
     input.substract_mean_normalize(mean_vals, norm_vals);  
     // pretty_print(input);
 
-    clock_t start,finish;
-    start=clock();
+    // clock_t start,finish;
+    // start=clock();
+    auto t1 = std::chrono::high_resolution_clock::now();            
     // ncnn前向计算
     ncnn::Extractor extractor = net.create_extractor();
     extractor.input("input", input);
     ncnn::Mat output;
     extractor.extract("output", output);
-    finish=clock();
-    duration+=(double)(finish-start);
+
+    std::chrono::duration<double, std::milli> fp_ms;
+    auto t2 = std::chrono::high_resolution_clock::now();
+    fp_ms = t2 - t1;
+    // auto int_ms = std::chrono::duration_cast<std::chrono::milliseconds>(fp_ms);    
+    duration+=fp_ms.count();
+
+    // finish=clock();
+    // duration+=(double)(finish-start);
     float value=.0f;
     const float* ptr = output.channel(0);
     // float a[128];
@@ -130,9 +139,10 @@ bool compare(string &path1,string &path2,ncnn::Net &net,int &answer){
 int main() {
     // 加载转换并且量化后的alexnet网络
     ncnn::Net net;
-    net.opt.num_threads=2;
+    net.opt.num_threads=4;
     net.load_param("my_mobileface-sim-opt.param");
     net.load_model("my_mobileface-sim-opt.bin");
+    // cout<<CLOCKS_PER_SEC<<endl;
 
     string input_file="lfw_test_pair_mini.txt";
     string query;
@@ -151,7 +161,6 @@ int main() {
             sscanf(info[2].c_str(), "%d", &answer);
             info[0]="./aligned_imgs/"+info[0];
             info[1]="./aligned_imgs/"+info[1];
-            // cout<<info[0]<<" "<<info[1]<<" "<<answer<<endl;
             result = compare(info[0],info[1],net,answer);
             if(!result){
                 wrong++;
